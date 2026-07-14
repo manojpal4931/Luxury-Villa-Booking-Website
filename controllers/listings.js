@@ -121,3 +121,32 @@ module.exports.destroyListing  = async (req, res) => {
         res.redirect("/listings");
     }
 
+    // search optimization
+
+    module.exports.searchListings = async (req, res) => {
+
+    const { q } = req.query;
+
+    if (!q || q.trim() === "") {
+        req.flash("error", "Please enter something to search!");
+        return res.redirect("/listings");
+    }
+
+    const allListings = await Listing.find({
+        $or: [
+            { title: { $regex: q, $options: "i" } },
+            { location: { $regex: q, $options: "i" } },
+            { country: { $regex: q, $options: "i" } },
+            { description: { $regex: q, $options: "i" } }
+        ]
+    });
+
+    if (allListings.length === 0) {
+        req.flash("error", "No Listings Found!");
+        return res.redirect("/listings");
+    }
+
+    res.render("listings/index", { allListings });
+};
+
+
